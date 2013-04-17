@@ -100,6 +100,7 @@ var foreground = {
     },
     
     /* set up handlers to pinch zoom runner */
+    /* TODO: using webkit-specific vendor prefix for transforms for now, can make more cross-platform */
     initPinchZoom: function() {
         /* start pinch zoom when one of the touch points is near the running man */
         foreground.gestures.on('transformstart', function(event) {

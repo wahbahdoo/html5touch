@@ -1,4 +1,4 @@
-Simple example for gesture recognition using [hammer.js][http://eightmedia.github.io/hammer.js/].
+Simple example for gesture recognition using <a href="http://eightmedia.github.io/hammer.js/">hammer.js</a>
 
 Live demo at http://wahbahdoo.github.io/html5touch/
 

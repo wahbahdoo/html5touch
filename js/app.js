@@ -41,6 +41,7 @@ var foreground = {
         /* initialize sprite to animate a jump */
         foreground.jumpSprite = [165, 0, 80, 150];
         /* initialize position of sprites wrt background */
+        /* foreground.destX is determined dynamically based on current frame */
         foreground.destY = height * 0.6;    /* horizontal plane of runner on canvas */
         foreground.destWidth = height / 15; /* width of runner's stride on canvas */
         foreground.destHeight = height / 8; /* height of runner on canvas */
@@ -55,6 +56,7 @@ var foreground = {
             /* prevent default browser handling for transform (multitouch) events */
             transform_always_block: true
         });
+        /* keep track of animation state (during drag & pinch) */
         foreground.dragged = false;
         foreground.pinched = false;
     },
@@ -206,6 +208,7 @@ var background = {
     init: function() {
         /* get 2d context of background canvas */
         var ctx = document.getElementById('background').getContext('2d');
+        /* initialize source background image */
         var img = new Image();
         img.onload = function() {
             /* resize canvas to fit image height */
@@ -216,6 +219,7 @@ var background = {
             /* enable foreground canvas */
             foreground.init(ctx.canvas.width, ctx.canvas.height);
         };
+        /* load image */
         img.src = 'imgs/toronto.jpg';
     }
 };

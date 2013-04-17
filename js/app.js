@@ -3,8 +3,10 @@ var foreground = {
     
     /* initialize foreground canvas */
     init: function(width, height) {
+        /* get foreground canvas */
+        foreground.elem = document.getElementById('foreground');
         /* get 2d context of foreground canvas */
-        foreground.ctx = document.getElementById('foreground').getContext('2d');
+        foreground.ctx = foreground.elem.getContext('2d');
         /* initialize parameters needed to draw on canvas */
         foreground.initParams(width, height);
         /* initialize gesture handling */
@@ -17,6 +19,9 @@ var foreground = {
             foreground.initRunAnim();
             /* set up handlers to animate jump on double tap */
             foreground.initJumpAnim();
+            /* set up handlers to pinch zoom runner */
+            foreground.initPinchZoom();
+            
         };
         /* load image */
         foreground.img.src = 'imgs/stickman.png';
@@ -43,13 +48,15 @@ var foreground = {
     
     /* initialize gesture handling */
     initGestures: function() {
-        var canvas = document.getElementById('foreground');
-        foreground.gestures = Hammer(canvas, {
-            /* prevent default browser handling for drag events (scrolling) */
+        foreground.gestures = Hammer(foreground.elem, {
+            /* prevent default browser handling for drag events */
             drag_block_horizontal: true,
-            drag_block_vertical: true
+            drag_block_vertical: true,
+            /* prevent default browser handling for transform (multitouch) events */
+            transform_always_block: true
         });
         foreground.dragged = false;
+        foreground.pinched = false;
     },
     
     /* set up handlers to animate running man based on drag gestures */
@@ -58,9 +65,11 @@ var foreground = {
         foreground.drawRunFrame(2);
         /* start animation when starting to drag on running man */
         foreground.gestures.on('dragstart', function(event) {
-            if (foreground.isTarget(event.gesture.startEvent.center.pageX, event.gesture.startEvent.center.pageY)) {
+            if (!foreground.pinched && foreground.isTarget(event.gesture.startEvent.center.pageX, event.gesture.startEvent.center.pageY)) {
+                console.log('dragstart');
                 foreground.dragged = true;
             }
+            else { console.log('drag'); }
         });
         /* animate each frame when dragged far enough */
         foreground.gestures.on('drag', function(event) {
@@ -73,6 +82,9 @@ var foreground = {
         });
         /* stop animation */
         foreground.gestures.on('dragend', function(event) {
+            if (foreground.dragged) {
+                console.log('dragend');
+            }
             foreground.dragged = false;
         });
         /* TODO: for cooler demo, implement scrolling when drag/holding at edge of screen */
@@ -83,6 +95,42 @@ var foreground = {
         foreground.gestures.on('doubletap', function(event) {
             if (foreground.isTarget(event.gesture.center.pageX, event.gesture.center.pageY)) {
                 foreground.drawJumpAnim();
+            }
+        });
+    },
+    
+    /* set up handlers to pinch zoom runner */
+    initPinchZoom: function() {
+        /* start pinch zoom when one of the touch points is near the running man */
+        foreground.gestures.on('transformstart', function(event) {
+            if (foreground.isTarget(event.gesture.touches[0].pageX, event.gesture.touches[0].pageY) || 
+                foreground.isTarget(event.gesture.touches[1].pageX, event.gesture.touches[1].pageY)) {
+                foreground.pinched = true;
+                /* set transform origin to center of running man */
+                var x = (foreground.destX + (foreground.destWidth / 2)) / foreground.ctx.canvas.width * 100 + '%';
+                var y = (foreground.destY + (foreground.destHeight / 2)) / foreground.ctx.canvas.height * 100 + '%';
+                foreground.elem.style.webkitTransformOrigin = x + ' ' + y + ' 0';
+            }
+        });
+        /* zoom according to pinch distance and position */
+        foreground.gestures.on('pinch', function(event) {
+            if (foreground.pinched) {
+                /* shift center of man to center of fingers */
+                var deltaX = event.gesture.center.pageX - (foreground.destX + (foreground.destWidth / 2)) + 'px';
+                var deltaY = event.gesture.center.pageY - (foreground.destY + (foreground.destHeight / 2)) + 'px';
+                var translate = 'translate3d(' + deltaX + ',' + deltaY + ',0)';
+                /* zoom according to distance between fingers */
+                var scale = 'scale3d(' + event.gesture.scale + ',' + event.gesture.scale + ',1)';
+                /* zoom using css3 transform */
+                foreground.elem.style.webkitTransform = translate + ' ' + scale;
+            }
+        });
+        /* end pinch zoom and reset canvas */
+        foreground.gestures.on('transformend', function(event) {
+            if (foreground.pinched) {
+                console.log('transformend');
+                foreground.pinched = false;
+                foreground.elem.style.webkitTransform = 'translate3d(0,0,0) scale3d(1,1,1)';
             }
         });
     },
